@@ -1,14 +1,10 @@
 @startuml
-class Object << general >>
-Object <|--- ArrayList
+class Position << TOMP-API NRW - Extension >>
 
-note top of Object : In java, every class\nextends this one.
+note top of Position : Positon objects have "AdditionalProperties=true" within the TOMP-API Spec, i.e. they can be extended without breaking the contract
 
-note "This is a floating note" as N1
-note "This note is connected\nto several objects." as N2
-Object .. N2
-N2 .. ArrayList
+Leg .. Position
 
-class Foo
-note left: On last defined class
+class Leg
+
 @enduml

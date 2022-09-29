@@ -1,0 +1,65 @@
+@startuml
+
+participant "Plane Reise:\n**mobil.nrw**\n(Mobility Service Provider)" as routing_app
+participant "Berechne Routenoptionen:\n**Intermodaler Router**:\n(ZMDZ)" as dz_intermodal_router
+participant "Berechne Teilrouten:\n**Intermodaler Router**:\n(ZMDZ)" as dz_router
+participant "Berechne Route zum \nnächsten Startbahnhof:\n**Request Broker**:\n(ZMDZ)" as dz_broker_route_start
+participant "Suche nächsten Startbahnhof:\n**Poi Service**:\n(ZMDZ)" as  dz_poiservice_start
+participant "Optimiere Fahrradroute\nzum Startbahnhof\n**Fahrradrouting**:\n(RRP NRW)" as  dz_bicycle_router_start
+participant "Berechne Route vom \nnächsten Zielbahnhof:\n**Request Broker**:\n(ZMDZ)" as dz_broker_route_target
+participant "Suche nächsten Zielbahnhof:\n**Poi Service**:\n" as  dz_poiservice_target
+participant "Optimiere Fahrradroute\nzum Zielbahnhof\n**Fahrradrouting**:\n(RRP NRW)" as  dz_bicycle_router_target
+participant "Optimiere Fahrradroute\nGesamtstrecke\n**Fahrradrouting**:\n(RRP NRW)" as  dz_bicycle_router_complete
+participant "Berechne ÖPNV-Gesamtroute:\n**Routing Service**:\n(DELFI)" as  delfi_router
+
+note over dz_router: Ermittle potentielle Start- und Zielbahnhöfe\nund Fahrradrouten parallel zur DELFI-Route\n("Prefetching" der potentiellen Fahrradrouten)
+
+routing_app -> dz_intermodal_router : GET /planning-options/\n{ **journey_start** }/{ **journey_target** }?\nmodal=**bike,öpnv,bike+öpnv**
+activate routing_app
+activate dz_intermodal_router
+dz_intermodal_router -> dz_router : GET /planning-parts/\n{ **journey_start** }/{ **journey_target** }?\nmodal=**bike,öpnv,bike+öpnv**
+activate dz_router
+dz_router  ->> dz_broker_route_start : GET route-to-nearest-poi/\n{ **journey_start** }?\ntags=**railway.halt,railway.stop**\nmodal=**bike**
+activate dz_broker_route_start
+dz_broker_route_start -> dz_poiservice_start : GET pois/around/\n{ **journey_start** }?\ntags=**railway.halt,railway.stop**&\nlimit=**3**
+activate dz_poiservice_start
+dz_broker_route_start <-- dz_poiservice_start : Response: { **start_station**}
+deactivate dz_poiservice_start
+dz_broker_route_start -> dz_bicycle_router_start : GET route/\n{ **start_station** }/{ **journey_target** }\n?modal=**bike**
+activate dz_bicycle_router_start
+dz_broker_route_start  <--  dz_bicycle_router_start: Response: { **optimized_bicycle_start_route** }
+deactivate dz_bicycle_router_start
+dz_router  <<-- dz_broker_route_start: Response: { **optimized_bicycle_start_route** }
+deactivate dz_broker_route_start
+
+dz_router  ->> dz_broker_route_target :  : GET route-from-nearest-poi/\n{ **journey_target** }?\ntags=**railway.halt,railway.stop**\nmodal=**bike**
+activate dz_broker_route_target
+dz_broker_route_target -> dz_poiservice_target : GET pois/around/\n{ **journey_target** }?\ntags=**railway.halt,railway.stop**&\nlimit=**3**
+activate dz_poiservice_target
+dz_broker_route_target <-- dz_poiservice_target : Response: { **target_station**}
+deactivate dz_poiservice_target
+dz_broker_route_target -> dz_bicycle_router_target : GET route/\n{ **target_station** }/{ **journey_target** }\n?modal=**bike**
+activate dz_bicycle_router_target
+dz_broker_route_target  <--  dz_bicycle_router_target: Response: { **optimized_bicycle_target_route** }
+deactivate dz_bicycle_router_target
+dz_router  <<-- dz_broker_route_target: Response: { **optimized_bicycle_target_route** }
+deactivate dz_broker_route_target
+
+dz_router  ->> dz_bicycle_router_complete : GET route/\n{ **journey_start** }/{ **journey_target** }\n?modal=**bike**
+activate dz_bicycle_router_complete
+dz_router  <<-- dz_bicycle_router_complete: Response: { **optimized_bicycle_complete_route** }
+deactivate dz_bicycle_router_complete
+dz_router  ->> delfi_router : GET route/\n{ **journey_start** }/{ **journey_target** }?modal=**bike,öpnv,bike+öpnv**
+activate delfi_router
+dz_router  <<-- delfi_router: Response: { **delfi_route** }
+deactivate delfi_router
+dz_intermodal_router <- dz_router : Response: { **bike_optimized_planning_parts **}
+deactivate  dz_router
+dz_intermodal_router  -> dz_intermodal_router: Transform and assemble results
+dz_intermodal_router --> routing_app: Response: { **bike_optimized_delfi_options** }
+deactivate dz_intermodal_router
+deactivate routing_app
+
+note right dz_poiservice_start: "PostGis - DB"
+
+@enduml
