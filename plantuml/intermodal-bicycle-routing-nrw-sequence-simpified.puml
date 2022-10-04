@@ -7,8 +7,8 @@ participant "Berechne Routen zu \nnahegelegenen Startbahnhöfen:\n**Request Brok
 participant "Berechne Route von \npotenziellen Zielbahnhöfen:\n**Request Broker**:\n(ZMDZ->RRP)" as dz_broker_route_target
 participant "Optimiere Fahrradroute\nGesamtstrecke\n**Fahrradrouting**:\n(RRP NRW)" as  dz_bicycle_router_complete
 participant "Berechne ÖPNV-Gesamtroute:\n**Routing Service**:\n(DELFI)" as  delfi_router
-participant "Konsolidiere Routen:\n**Assemble Service**:\n(ZMDZ)" as dz_assemble_service
-participant "Konsolidiere Routen:\n**Evaluation Service**:\n(ZMDZ)" as dz_eval_service
+participant "Konsolidiere Routen:\n**Assemble Service**:\n(ZMDZ)" as dz_assemble
+participant "Konsolidiere Routen:\n**Evaluation Service**:\n(ZMDZ)" as dz_evaluate
 participant "Route zu bestimmten Endpunkt\n**Fahrradrouting**:\n(RRP NRW)" as rrp_routing 
 
 note over dz_router: Ermittle potentielle Start- und Zielbahnhöfe\nund Fahrradrouten parallel zur DELFI-Route\n("Prefetching" der potentiellen Fahrradrouten)
@@ -44,20 +44,20 @@ end
 dz_intermodal_router <- dz_router : Response: { **bike_optimized_planning_parts **}
 deactivate  dz_router
 
-dz_intermodal_router  -> dz_assemble_service : GET consolidated-routes/\n{ **öpnv-routes**,\n **bicycle routes** }
-activate dz_assemble_service
-dz_assemble_service -> dz_eval_service : GET all öpnv-routes with bicycle route
-activate dz_eval_service
+dz_intermodal_router  -> dz_assemble : GET consolidated-routes/\n{ **öpnv-routes**,\n **bicycle routes** }
+activate dz_assemble
+dz_assemble -> dz_evaluate : GET all öpnv-routes with bicycle route
+activate dz_evaluate
 opt
-dz_eval_service -> rrp_routing : GET route to station\n{ ** missing station ** } 
+dz_evaluate -> rrp_routing : GET route to station\n{ ** missing station ** } 
 activate rrp_routing
-dz_eval_service <- rrp_routing: Response: { **route to missing station** }
+dz_evaluate <- rrp_routing: Response: { **route to missing station** }
 deactivate rrp_routing
 end
-dz_assemble_service <- dz_eval_service
-deactivate dz_eval_service
-dz_intermodal_router <- dz_assemble_service : Response: { ** combined routes ** }
-deactivate dz_assemble_service
+dz_assemble <- dz_evaluate
+deactivate dz_evaluate
+dz_intermodal_router <- dz_assemble : Response: { ** combined routes ** }
+deactivate dz_assemble
 dz_intermodal_router  -> dz_intermodal_router: Transform results
 dz_intermodal_router --> routing_app: Response: { **bike_optimized_delfi_options** }
 deactivate dz_intermodal_router
