@@ -13,8 +13,8 @@ Evaluated --> Decided
 
 Decided --> [*]
 
-Open : Motivation und Problemstellung sind beschrieben, der Bescheidungsbedarf ist noch nicht adressiert
-Adressed : Der Bescheidungsbedarf ist an den Entscheider adressiert, es sind aber noch keine Lösungsalternativen bewertet
+Open : Motivation und Problemstellung sind beschrieben, der Entscheidungsbedarf ist noch nicht adressiert
+Adressed : Der Entscheidungsbedarf ist an den Entscheider adressiert, es sind aber noch keine Lösungsalternativen bewertet
 Evaluated: Die Lösungsalternativen sind bewertet und eine Empfehlung liegt vor
 Decided : Die Entscheidung ist getroffen und kommuniziert
 
