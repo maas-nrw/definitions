@@ -1,0 +1,32 @@
+---
+attribution: "openrouteservice.org | OpenStreetMap contributors"
+maximum_categories: 5
+# meters
+maximum_search_radius_for_linestrings: 20000
+maximum_search_radius_for_points: 20000
+maximum_search_radius_for_polygons: 20000
+# square meters (= 25 km * 25 km)
+maximum_area: 1100000000
+
+# meters (= 500 km)
+maximum_linestring_length: 500000
+# limit of pois
+response_limit: 2000
+# amount of workers used for parsing the osm files
+concurrent_workers: 4
+# Database parameters
+provider_parameters:
+  table_name: ops_planet_pois
+  db_name: gis
+  user_name: gis_admin
+  password: admin
+  host: localhost
+  port: 5432
+  port_tests: 5432
+column_mappings:
+  # https://wiki.openstreetmap.org/wiki/Key:name
+  name:
+  # https://wiki.openstreetmap.org/wiki/Key:railway
+  railway:
+  # https://wiki.openstreetmap.org/wiki/Key:public_transport
+  public_transport:

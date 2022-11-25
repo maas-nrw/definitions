@@ -1,0 +1,100 @@
+version: "2.2"
+
+volumes:
+ postgis-data:
+
+networks:
+ poi_network:
+
+services:
+ api:
+  container_name: ops-api
+  build: ../../openpoiservice
+  environment:
+   - UPDATE_DB=1
+  volumes:
+  - ../../openpoiservice/osm:/deploy/app/osm
+  - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  ports:
+   - "5000:5000"
+  depends_on:
+    - db
+  mem_limit: 28g
+  networks:
+   - poi_network
+
+ # Don't forget to change the host name inside ops_settings_maas.yml by the one given to docker container.
+ # Also port should be set to 5432 (default value) inside the same file since they are on the same network
+ db:
+  container_name: ops-db
+  image: kartoza/postgis:11.0-2.5
+  volumes:
+   - postgis-data:/var/lib/postgresql
+  environment:
+   # If you need to create multiple database you can add coma separated databases eg gis,data
+   - POSTGRES_DB=gis
+   - POSTGRES_USER=gis_admin    # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+   - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+   - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+   - ALLOW_IP_RANGE=0.0.0.0/0
+  ports:
+   - 5432:5432
+  restart: on-failure
+  networks:
+   - poi_network
+
+ # These two services will not start by default and can be run as necessary:
+ # docker-compose up init
+ # docker-compose up update
+ init:
+  container_name: ops-init
+  build: ../../openpoiservice
+  environment:
+   - INIT_DB=1
+  volumes:
+  - ../../openpoiservice/osm:/deploy/app/osm
+  - ../../openpoiservice/import-log.json:/deploy/app/import-log.json
+  - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+    - db
+  mem_limit: 28g
+  networks:
+   - poi_network
+  profiles:
+   - initialize
+
+ update:
+  container_name: ops-update
+  build: ../../openpoiservice
+  environment:
+   - UPDATE_DB=1
+  volumes:
+  - ../../openpoiservice/osm:/deploy/app/osm
+  - ../../openpoiservice/import-log.json:/deploy/app/import-log.json
+  - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+  - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+    - db
+  mem_limit: 28g
+  networks:
+   - poi_network
+  profiles:
+   - update
+
+ test:
+  container_name: ops-test
+  build: ../../openpoiservice
+  environment:
+   - TESTING=True
+  volumes:
+   - ../../openpoiservice/osm:/deploy/app/osm
+   - ../../openpoiservice/osm_test:/deploy/app/osm_test
+   - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
+   - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
+  depends_on:
+   - db
+  mem_limit: 8g
+  networks:
+   - poi_network
