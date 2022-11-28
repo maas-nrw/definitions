@@ -67,7 +67,12 @@ Parameters are:
 
 Optional:
 - output_format=[html|geojson]
+### AWS Deployment
+The [ecs-cli](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Copilot.html) now supports sending docker compose configs in Amazon ECS:
 
+1. Download and install AWS Copilot CLI using the above link or the provided setup scripts [setup.sh for Linux](aws-deploy/setup.sh) or [setup.ps for Linux](aws-deploy/setup.ps1)
+- Precondition for the script is the [installation of Gnu GPG](https://www.gnupg.org/download/index.html)
+2. 
 ## Relevant standards
 
 ### GeoJson - Standard and default geo coordinate system specification
