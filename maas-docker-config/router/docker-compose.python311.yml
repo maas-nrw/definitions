@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+ api:
+  image: maasnrw/router-api:0.2-alpha-python311-latest
+  ports:
+   - "5011:5000"
+
+ db:
+  ports:
+   - 5432:5432

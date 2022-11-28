@@ -28,7 +28,8 @@ Note: On Ubuntu 22.04 LTS `docker-compose-plugin` is not part of the default rep
 Note: On Win10, follow the instructions given by [docker](https://docs.docker.com/desktop/install/windows-install/). If you want to circumvent the usage of docker-desktop see [Felipe Santos post](https://dev.to/felipecrs/simply-run-docker-on-wsl2-3o8), not tested yet.
 
 2. Configuration
-The router can be started and configured using a public docker image which is installed automatically by the docker compose using [docker-compose-maas-router.yml](maas-docker-config/router/docker-compose-maas-router.yml). 
+The router can be started and configured using a public docker image which is installed automatically by the docker compose using [docker-compose-maas-router.yml](maas-docker-config/router/docker-compose.yml).
+
 
 The router embeds the MaaS specific fork of the [openpoiservice](https://github.com/maas-nrw/openpoiservice) project as a python module - many thanks and credits to the original creators!
 
@@ -36,7 +37,12 @@ The openpoiservice is used to lookup stations and other interesting features for
 
 The router and all dependencies can be started using  
 ```
-docker compose -f maas-docker-config/router/docker-compose-maas-router.yml up -d  api
+cd definitions/maas-docker-config/router/
+docker compose up -d  api
+```
+For using the (experimental) Python 3.11 version (much faster!) the following override config will start it at port 5011:
+```
+docker compose -f docker-compose.yml -f docker-compose-python311.yml up -d  api
 ```
 Afterwards the database has to be initialised because otherwise no POIs will be found. 
 The following sample downloads NRW or Cologne map data and loads all POIs configured within the ops_setting_maas.yml:

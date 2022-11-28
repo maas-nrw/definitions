@@ -16,8 +16,6 @@ services:
   - ../../openpoiservice/osm:/deploy/app/osm
   - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
-  ports:
-   - "5000:5000"
   depends_on:
     - db
   mem_limit: 28g

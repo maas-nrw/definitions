@@ -1,4 +1,4 @@
-version: "2.2"
+version: "3"
 
 volumes:
  postgis-data:
@@ -9,17 +9,14 @@ networks:
 services:
  api:
   container_name: router-api
-  image: maasnrw/router-api:latest
   build: ../../..
-  volumes:
-  - ./:/deploy/app/router/config
   environment:
    - POISERVICE_CONFIG_BASEDIR=/deploy/app/router/config
    - POISERVICE_CONFIG_CATEGORIES=categories_maas.yml
    - POISERVICE_CONFIG_OPS_SETTINGS=ops_settings_maas.yml
    - APP_SETTINGS=router.config.MaasDevelopmentConfig
-  ports:
-   - "5000:5000"
+  volumes:
+  - ./:/deploy/app/router/config
   depends_on:
     - db
   mem_limit: 28g
@@ -40,8 +37,6 @@ services:
    - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
    - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
    - ALLOW_IP_RANGE=0.0.0.0/0
-  ports:
-   - 5432:5432
   restart: on-failure
   networks:
    - poi_network
