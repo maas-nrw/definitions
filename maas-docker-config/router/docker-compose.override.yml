@@ -2,6 +2,10 @@ version: "3"
 
 services:
  api:
+  build:
+   args:
+    PYTHON_VERSION: 3.9
+  container_name: router-api
   image: maasnrw/router-api:0.0.1-alpha-latest
   ports:
    - "5000:5000"
@@ -9,3 +13,12 @@ services:
  db:
   ports:
    - 5432:5432
+
+ api311:
+  build:
+   args:
+    PYTHON_VERSION: 3.11
+  container_name: router-api311
+  image: maasnrw/router-api:0.0.2-python311-latest
+  ports:
+   - "5011:5000"

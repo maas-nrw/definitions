@@ -8,8 +8,8 @@ networks:
 
 services:
  api: &api
-  container_name: router-api
-  build: ../../..
+  build:
+   context: ../../..
   environment:
    - POISERVICE_CONFIG_BASEDIR=/deploy/app/router/config
    - POISERVICE_CONFIG_CATEGORIES=categories_maas.yml
@@ -22,6 +22,8 @@ services:
   mem_limit: 28g
   networks:
    - poi_network
+ api311:
+  <<: *api
 
  # Don't forget to change the host name inside ops_settings_maas.yml by the one given to docker container.
  # Also port should be set to 5432 (default value) inside the same file since they are on the same network
