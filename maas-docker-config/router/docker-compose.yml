@@ -7,7 +7,7 @@ networks:
  poi_network:
 
 services:
- api:
+ api: &api
   container_name: router-api
   build: ../../..
   environment:
