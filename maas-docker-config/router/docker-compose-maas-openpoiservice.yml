@@ -9,11 +9,9 @@ networks:
 services:
  api:
   container_name: ops-api
-  build: ../../openpoiservice
-  environment:
-   - UPDATE_DB=1
+  build: ../../../openpoiservice
   volumes:
-  - ../../openpoiservice/osm:/deploy/app/osm
+  - ../../../openpoiservice/osm:/deploy/app/osm
   - ./ops_settings_maas.yml:/deploy/app/openpoiservice/server/ops_settings.yml
   - ./categories_maas.yml:/deploy/app/openpoiservice/server/categories/categories.yml
   depends_on:
