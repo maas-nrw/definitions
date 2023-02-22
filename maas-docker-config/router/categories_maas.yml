@@ -10,35 +10,3 @@ transport:
             stop_position: 608
             stop_area: 609
             station: 610
-
-router_v1:
-    bicycle_stations:
-        id: 4711
-        and_filter:
-        - osm_filter:
-            railway:
-                - station
-                - halt
-        - osm_filter:
-              public_transport:
-                - station
-
-
-router_v2:
-    bicycle_sharing_stations:
-        id: 5001
-    bicycle_stations:
-        id: 4712
-        or_filter:
-        - trias_filter:
-          - railway_station:
-                true
-        - osm_filter:
-            and_filter:
-                - osm_filter:
-                      railway:
-                          - station
-                          - halt
-                - osm_filter:
-                      public_transport:
-                          - station
