@@ -36,7 +36,15 @@ component Routing {
     }
     class TransportProduct {
         String id, name, description
+        OwnershipType owner
     }
+
+    enum OwnershipType {
+        OWNED_BY_TRAVELLER
+        RENTED_OPERATED_BY_TRAVELLER
+        SERVICE_OPERATED_BY_TRANSPORT_OPERATOR
+    }
+
     abstract class AbstractRoutingLeg
     abstract class BikeRoutingLeg
 
@@ -54,6 +62,9 @@ component Routing {
 
 
     package RoutingRequest {
+        class RoutingRequest {
+
+        }
         abstract class AbstractRoutingRequestParams {
             TransportProduct[] allowed_products()
             RoadType[] road_restrictions()
@@ -64,11 +75,13 @@ component Routing {
         AbstractRoutingRequestParams <|-- GeneralRoutingRequestParams
         AbstractRoutingRequestParams <|-- BikeSpecificRoutingRequestParams
         AbstractRoutingRequestParams <|-- PublicTransportSpecificRoutingRequestParams
-        AbstractRoutingRequestParams <|-- PublicTransportSpecificRoutingRequestParams
+        AbstractRoutingRequestParams <|-- PublicTransportCombinedWithBikeSpecificRoutingRequestParams
 
         interface IntermodalRoutingRequestParams {
-            AbstractRoutingRequestParams routing_params()
+            GeneralRoutingRequestParams general_routing_params()
             AbstractRoutingRequestParams routing_params_by_modality(RoutingModality)
+            AbstractRoutingRequestParams routing_params_for_first_mile()
+            AbstractRoutingRequestParams routing_params_for_last_mile()
         }
 
     }
@@ -80,24 +93,15 @@ component Routing {
     }
 
     class AbstractRoutingLeg {
-        Time plannedStartTime, plannedEndTime
+        DateTime plannedStartTime, plannedEndTime
         Coords startCoords()
         Coords endCoords()
-        int air_line_distance()
+        int air_line_distance_m()
         Waypoint[] waypoints
         RoutingModality modality
-        RouteStatus status()
     }
 
     AbstractRoutingLeg <|-- BikeRoutingLeg
-
-    class AbstractRoutingLeg {
-        DateTime plannedStartTime, plannedEndTime
-        RoutingModality modality
-        RouteStatus status()
-    }
-
-    class RoutingLegsSequence
 
     enum RouteStatus {
         REQUESTED
@@ -122,6 +126,7 @@ component MetaRouter {
     abstract class RouterEdge {
         start_node RouterNode
         end_node RouterNode
+        RouterEdgeStatus status()
     }
 
     RouterNode <|-- Waypoint
@@ -134,6 +139,17 @@ component MetaRouter {
         MERGED
         OPTIMIZED
     }
+
+    package Graph {
+        class Node
+        class Edge
+
+    }
+
+    Node <|-- RouterNode
+    Edge <|-- RouterEdge
+
+
 }
 MetaRouter --[hidden]> RequestBroker
 
