@@ -1,0 +1,157 @@
+@startuml
+'https://plantuml.com/class-diagram
+'skinparam nodesep 10
+'skinparam ranksep 20
+
+component Routing {
+
+    enum RoutingModality {
+        INTERMODAL
+        PUBLIC_TRANSPORT
+        BIKE
+        FOOT
+        CAR
+    }
+
+    enum RoadType {
+        ASPHALT
+        ROAD
+        AUTOBAHN
+        RAIL
+        FOOTPATH
+        BIKEPATH
+    }
+    enum EngineType {
+        MUSCLE
+        ELECTRIC
+        FUELED
+    }
+    enum FuelType {
+        Benzin
+        Diesel
+        H2
+        eFuel
+        LPG
+        LNG
+    }
+    class TransportProduct {
+        String id, name, description
+    }
+    abstract class AbstractRoutingLeg
+    abstract class BikeRoutingLeg
+
+    class Journey {
+        RoutingLeg[] legs()
+        RouteStatus status()
+    }
+
+    package Geography {
+        class Coords {
+            int distance_m(coords Coords)
+        }
+
+    }
+
+
+    package RoutingRequest {
+        abstract class AbstractRoutingRequestParams {
+            TransportProduct[] allowed_products()
+            RoadType[] road_restrictions()
+            EngineType[] engine_restrictions()
+            FuelType[] fuel_restrictions()
+            RoutingModality[] modality()
+        }
+        AbstractRoutingRequestParams <|-- GeneralRoutingRequestParams
+        AbstractRoutingRequestParams <|-- BikeSpecificRoutingRequestParams
+        AbstractRoutingRequestParams <|-- PublicTransportSpecificRoutingRequestParams
+        AbstractRoutingRequestParams <|-- PublicTransportSpecificRoutingRequestParams
+
+        interface IntermodalRoutingRequestParams {
+            AbstractRoutingRequestParams routing_params()
+            AbstractRoutingRequestParams routing_params_by_modality(RoutingModality)
+        }
+
+    }
+
+    class Waypoint {
+        String id
+        String name
+        Coords coords
+    }
+
+    class AbstractRoutingLeg {
+        Time plannedStartTime, plannedEndTime
+        Coords startCoords()
+        Coords endCoords()
+        int air_line_distance()
+        Waypoint[] waypoints
+        RoutingModality modality
+        RouteStatus status()
+    }
+
+    AbstractRoutingLeg <|-- BikeRoutingLeg
+
+    class AbstractRoutingLeg {
+        DateTime plannedStartTime, plannedEndTime
+        RoutingModality modality
+        RouteStatus status()
+    }
+
+    class RoutingLegsSequence
+
+    enum RouteStatus {
+        REQUESTED
+        PROPOSED
+        PLANNED
+        STARTED
+        TRAVELLED
+    }
+}
+
+Routing --[hidden]> MetaRouter
+
+component MetaRouter {
+    class RoutingOptions
+
+    abstract class RouterNode {
+        DateTime plannedArrivalTime, plannedDepartureTime
+        int air_line_distance_to_origin()
+        int air_line_distance_to_destination()
+
+    }
+    abstract class RouterEdge {
+        start_node RouterNode
+        end_node RouterNode
+    }
+
+    RouterNode <|-- Waypoint
+    RouterEdge <|-- AbstractRoutingLeg
+    RouterEdge <|-- RequestedRoute
+
+    enum RouterEdgeStatus {
+        REQUESTED
+        DATA_GATHERED
+        MERGED
+        OPTIMIZED
+    }
+}
+MetaRouter --[hidden]> RequestBroker
+
+component RequestBroker {
+    enum RequestStatus {
+        INITIALIZED
+        REQUESTED
+        EXECUTED
+    }
+
+    abstract class RequestBrokerNode {
+        params RoutingRequestParams
+        async retrieve_data()
+        async execute()
+    }
+}
+
+
+
+
+@enduml
