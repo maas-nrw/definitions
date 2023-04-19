@@ -1,45 +1,14 @@
 version: "3"
 
 volumes:
- postgis-data:
+  postgis-data:
+ router-data:
 
 networks:
  poi_network:
 
 services:
- otp:
-  container_name: otp-app
-  image: opentripplanner/opentripplanner
-  volumes:
-   - ../../../openpoiservice/osm:/var/opentripplanner
-  environment:
-   JAVA_OPTS: -Xms15g -Xmx15g
-  networks:
-   - poi_network
-  ports:
-   - "8080:8080"
-  command:
-   - --load
-   - --serve
-  depends_on:
-   - graph
-
- graph:
-  container_name: otp-graph-builder
-  image: opentripplanner/opentripplanner
-  volumes:
-   - ../../../openpoiservice/osm:/var/opentripplanner
-  environment:
-   JAVA_OPTS: -Xms15g -Xmx15g
-  networks:
-   - poi_network
-  command:
-   - --build
-   - --save
-
-
-
- api: &api
+  api: &api
   build:
    context: ../../..
   environment:
@@ -48,7 +17,8 @@ services:
    - POISERVICE_CONFIG_OPS_SETTINGS=ops_settings_maas.yml
    - APP_SETTINGS=router.config.MaasDevelopmentConfig
   volumes:
-  - ./:/deploy/app/router/config
+    - ./:/deploy/app/router/config
+    - router-data:/deploy/app/osm
   depends_on:
     - db
   mem_limit: 28g
@@ -60,18 +30,50 @@ services:
  # Don't forget to change the host name inside ops_settings_maas.yml by the one given to docker container.
  # Also port should be set to 5432 (default value) inside thedo same file since they are on the same network
  db:
-  container_name: ops-db
+   container_name: ops-db
   image: kartoza/postgis:11.0-2.5
   volumes:
    - postgis-data:/var/lib/postgresql
-  environment:
-   # If you need to create multiple database you can add coma separated databases eg gis,data
-   - POSTGRES_DB=gis
-   - POSTGRES_USER=gis_admin    # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
-   - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
-   - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
-   - ALLOW_IP_RANGE=0.0.0.0/0
-  restart: on-failure
-  networks:
-   - poi_network
+   environment:
+     # If you need to create multiple database you can add coma separated databases eg gis,data
+     - POSTGRES_DB=gis
+     - POSTGRES_USER=gis_admin    # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+     - POSTGRES_PASS=admin        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+     - POSTGRES_DBNAME=gis        # Here it's important to keep the same name as the one configured inside ops_settings_maas.yml
+     - ALLOW_IP_RANGE=0.0.0.0/0
+   restart: on-failure
+   networks:
+     - poi_network
+
+  otp:
+    container_name: otp-app
+    image: opentripplanner/opentripplanner
+    volumes:
+      - router-data:/var/opentripplanner
+    environment:
+      JAVA_OPTS: -Xms15g -Xmx15g
+    networks:
+      - poi_network
+    ports:
+      - "8080:8080"
+    command:
+      - --load
+      - --serve
+    depends_on:
+      - graph
+
+  graph:
+    container_name: otp-graph-builder
+    image: opentripplanner/opentripplanner
+    volumes:
+      - router-data:/var/opentripplanner
+    environment:
+      JAVA_OPTS: -Xms15g -Xmx15g
+    networks:
+      - poi_network
+    command:
+      - --build
+      - --save
+
+
 

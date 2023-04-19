@@ -59,6 +59,31 @@ docker exec -it router-api python manage.py add-map "europe/germany/nordrhein-we
 docker exec -it router-api python manage.py import-data
 ```
 
+The OpenTripPanner also requires one of the downloaded maps from previous step.
+Therefore, it is configured to use the same path. An addition the GTFS-feeds has to be downloaded.
+
+```
+docker exec -it router-api python manage.py add-gtfs
+```
+
+The OpenTripPlanner can be started by using the following command:
+(This will also start the dependent service: otp-graph-builder)
+
+#### Please make sure you have allocated enough resources to your docker environment. The service is very greedy and configured to use up to 15GB of memory
+
+```
+docker compose up -d otp
+```
+
+NOTE:  When you use this command for the first time, the opt-app image crashes as long as the graph file does not exist.
+Building the graph file takes a while, please be patient.
+
+If you like to track the progress, type:
+
+```
+docker logs --follow graph
+```
+
 Afterwards the API can be used, e.g.
 
 http://localhost:5001/route?from=6.866623:51.145449&to=7.033931230978567:51.34241436794224&modal=intermodal&output_format=html
