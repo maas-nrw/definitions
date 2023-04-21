@@ -7,38 +7,53 @@
 
 
 package router as "router = intermodal (Meta) Router"{
-    class RoutingOptions
-
-    abstract class RouterNode {
-        DateTime plannedArrivalTime, plannedDepartureTime
-        int air_line_distance_to_origin()
-        int air_line_distance_to_destination()
-
-    }
-    abstract class RouterEdge {
-        start_node RouterNode
-        end_node RouterNode
-        RouterEdgeStatus status()
-    }
+    package routing_graph {
+        interface JourneyRating {
+            int rate_journey_by_requirements(RoutingRequestParams params)
+        }
 
 
+        abstract class RouterNode {
+            Place place
+        }
 
-    enum RouterEdgeStatus {
-        REQUESTED
-        DATA_GATHERED
-        MERGED
-        OPTIMIZED
-    }
+        abstract class RouterEdge {
+            start_node RouterNode
+            end_node RouterNode
+            RouterEdgeStatus status()
+            Journey[] journey_options()
+        }
 
-    package Graph {
-        class Node
-        class Edge
-
+        enum RouterEdgeStatus {
+            REQUESTED
+            DATA_GATHERED
+            MERGED
+            OPTIMIZED
+        }
     }
 
-    Node <|-- RouterNode
-    Edge <|-- RouterEdge
+    package route_calculation {
+            class RouteCalculationNode {
+                RoutingRequestParams params
+                DateTime plannedArrivalTime, plannedDepartureTime
+                Place origin
+                Place destination
+                int air_line_distance_to_origin()
+                int air_line_distance_to_destination()
+                RouterNodeStatus status
 
+                RouterEdge[] retrieve_edges(target_node)
+                Journey[] journey_options()
+            }
+        enum RouteCalculationStatus {
+            REQUESTED
+            PROPOSED
+            PLANNED
+            STARTED
+            TRAVELLED
+        }
+
+    }
 
 }
 router --[hidden]> mobility_data_broker
@@ -69,14 +84,7 @@ package mobility_data_broker {
             CAR
         }
 
-        enum RoadType {
-            ASPHALT
-            ROAD
-            AUTOBAHN
-            RAIL
-            FOOTPATH
-            BIKEPATH
-        }
+
         enum EngineType {
             MUSCLE
             ELECTRIC
@@ -102,12 +110,14 @@ package mobility_data_broker {
         }
 
         abstract class RoutingLeg {
-            DateTime plannedStartTime, plannedEndTime
-            Coords startCoords()
-            Coords endCoords()
-            int air_line_distance_m()
+            Place origin
+            Place destination
+            Coords end_oords
+            int air_line_distance_m
             Waypoint[] waypoints
             RoutingModality modality
+            MobilityProduct product
+            int transport_duration_secs_estimated
         }
 
         note top of RoutingLeg
@@ -128,9 +138,12 @@ package mobility_data_broker {
         end note
 
         interface RoutingLegJourneyContext {
+            int leg_idx
             Journey journey
-            DateTime estimatedStartTime, estimatedEndTime:
-            int estimated_duration_secs()
+            DateTime arrival_time_estimated()
+            int waiting_time()
+            int duration_secs_including_waiting_time()
+            int journey_duration_secs_unti_arrival_estimated
         }
         note top of RoutingLegJourneyContext
             There is no interface keyword in python -
@@ -142,21 +155,29 @@ package mobility_data_broker {
         RoutingLeg <|--- RoutingLegJourneyWrapper
         RoutingLegJourneyContext <|--- RoutingLegJourneyWrapper
         class Journey {
-            RoutingLeg[] legs()
+            RoutingLegJourneyWrapper[] legs()
             RouteStatus status()
         }
     }
 
-
-
-    package request_parameters {
-
+    package routing_topology {
         package geography {
             class Coords {
-                int distance_m(coords Coords)
+                int distance_m(Coords coords)
             }
-
         }
+
+        enum RoadType {
+            ASPHALT
+            ROAD
+            AUTOBAHN
+            RAIL
+            FOOTPATH
+            BIKEPATH
+        }
+    }
+
+    package request_parameters {
         abstract class AbstractRoutingRequestParams {
             TransportProduct[] allowed_products()
             RoadType[] road_restrictions()
@@ -176,13 +197,7 @@ package mobility_data_broker {
             AbstractRoutingRequestParams routing_params_for_last_mile()
         }
 
-        enum RouteStatus {
-            REQUESTED
-            PROPOSED
-            PLANNED
-            STARTED
-            TRAVELLED
-        }
+
 
     }
 
@@ -190,15 +205,24 @@ package mobility_data_broker {
             class BikeRoutingLeg
             BikeRoutingLeg ---|> RoutingLeg
     }
+
     package broker_plugin_public_transport {
-        class DelfiRoutingLeg
+        class DelfiRoutingLeg {
+            DateTime transport_start_time_estimated
+            DateTime transport_start_time_scheduled
+            int transport_duration_secs_estimated
+
+        }
         DelfiRoutingLeg ---|> RoutingLeg
         note top of DelfiRoutingLeg
             A delfi routing leg implements the
             journey context interface - as it is always
             calculated as part of a potential journey
         end note
-        RoutingLegJourneyContext <|--- DelfiRoutingLeg
+        class DelfiRoutingLegJourneyWrapper {
+        }
+        RoutingLegJourneyWrapper <|--- DelfiRoutingLegJourneyWrapper
+        DelfiRoutingLeg <|--- DelfiRoutingLegJourneyWrapper
 
     }
 }
