@@ -3,66 +3,158 @@
 'skinparam nodesep 10
 'skinparam ranksep 20
 
-component Routing {
 
-    enum RoutingModality {
-        INTERMODAL
-        PUBLIC_TRANSPORT
-        BIKE
-        FOOT
-        CAR
-    }
 
-    enum RoadType {
-        ASPHALT
-        ROAD
-        AUTOBAHN
-        RAIL
-        FOOTPATH
-        BIKEPATH
+
+package router as "router = intermodal (Meta) Router"{
+    class RoutingOptions
+
+    abstract class RouterNode {
+        DateTime plannedArrivalTime, plannedDepartureTime
+        int air_line_distance_to_origin()
+        int air_line_distance_to_destination()
+
     }
-    enum EngineType {
-        MUSCLE
-        ELECTRIC
-        FUELED
-    }
-    enum FuelType {
-        Benzin
-        Diesel
-        H2
-        eFuel
-        LPG
-        LNG
-    }
-    class TransportProduct {
-        String id, name, description
-        OwnershipType owner
+    abstract class RouterEdge {
+        start_node RouterNode
+        end_node RouterNode
+        RouterEdgeStatus status()
     }
 
-    enum OwnershipType {
-        OWNED_BY_TRAVELLER
-        RENTED_OPERATED_BY_TRAVELLER
-        SERVICE_OPERATED_BY_TRANSPORT_OPERATOR
+
+
+    enum RouterEdgeStatus {
+        REQUESTED
+        DATA_GATHERED
+        MERGED
+        OPTIMIZED
     }
 
-    abstract class AbstractRoutingLeg
-    abstract class BikeRoutingLeg
+    package Graph {
+        class Node
+        class Edge
 
-    class Journey {
-        RoutingLeg[] legs()
-        RouteStatus status()
     }
 
-    package Geography {
-        class Coords {
-            int distance_m(coords Coords)
+    Node <|-- RouterNode
+    Edge <|-- RouterEdge
+
+
+}
+router --[hidden]> mobility_data_broker
+note top of router: "Corresponds to package "router" in python structure"
+
+package mobility_data_broker {
+
+    package broker_core {
+        enum RequestStatus {
+            INITIALIZED
+            REQUESTED
+            EXECUTED
         }
 
+        abstract class RequestBrokerNode {
+            params RoutingRequestParams
+            async retrieve_data()
+            async execute()
+        }
+    }
+
+    package routing_model_core {
+        enum RoutingModality {
+            INTERMODAL
+            PUBLIC_TRANSPORT
+            BIKE
+            FOOT
+            CAR
+        }
+
+        enum RoadType {
+            ASPHALT
+            ROAD
+            AUTOBAHN
+            RAIL
+            FOOTPATH
+            BIKEPATH
+        }
+        enum EngineType {
+            MUSCLE
+            ELECTRIC
+            FUELED
+        }
+        enum FuelType {
+            Benzin
+            Diesel
+            H2
+            eFuel
+            LPG
+            LNG
+        }
+        class TransportProduct {
+            String id, name, description
+            OwnershipType owner
+        }
+
+        enum OwnershipType {
+            OWNED_BY_TRAVELLER
+            RENTED_OPERATED_BY_TRAVELLER
+            SERVICE_OPERATED_BY_TRANSPORT_OPERATOR
+        }
+
+        abstract class RoutingLeg {
+            DateTime plannedStartTime, plannedEndTime
+            Coords startCoords()
+            Coords endCoords()
+            int air_line_distance_m()
+            Waypoint[] waypoints
+            RoutingModality modality
+        }
+
+        note top of RoutingLeg
+            A routing leg is (by our definition and
+            not exactly matching to what we find in
+            current implementations) a POTENTIAL part
+            of a journey and (rgf. the base class) not
+            a PLANNED or ACTUAL part.
+            The PLANNED of ACTUAL insertion of a RoutingLeg
+            into a journey is represented by the
+             RoutingLegJourneyWrapper.
+
+            Because <b>actual or estimated</b>
+            <b>departure / arrival times</b>
+            are not part of the base class - only
+            the scheduled times (which are )
+
+        end note
+
+        interface RoutingLegJourneyContext {
+            Journey journey
+            DateTime estimatedStartTime, estimatedEndTime:
+            int estimated_duration_secs()
+        }
+        note top of RoutingLegJourneyContext
+            There is no interface keyword in python -
+            we implement interfaces as abstract classes
+            deriving from abc.ABCMETA and implementing
+            __subclasshook__,
+            see https://realpython.com/python-interface/
+        end note
+        RoutingLeg <|--- RoutingLegJourneyWrapper
+        RoutingLegJourneyContext <|--- RoutingLegJourneyWrapper
+        class Journey {
+            RoutingLeg[] legs()
+            RouteStatus status()
+        }
     }
 
 
-    package RoutingRequest {
-        class RoutingRequest {
+
+    package request_parameters {
+
+        package geography {
+            class Coords {
+                int distance_m(coords Coords)
+            }
 
         }
         abstract class AbstractRoutingRequestParams {
@@ -84,90 +176,40 @@ component Routing {
             AbstractRoutingRequestParams routing_params_for_last_mile()
         }
 
-    }
-
-    class Waypoint {
-        String id
-        String name
-        Coords coords
-    }
-
-    class AbstractRoutingLeg {
-        DateTime plannedStartTime, plannedEndTime
-        Coords startCoords()
-        Coords endCoords()
-        int air_line_distance_m()
-        Waypoint[] waypoints
-        RoutingModality modality
-    }
-
-    AbstractRoutingLeg <|-- BikeRoutingLeg
-
-    enum RouteStatus {
-        REQUESTED
-        PROPOSED
-        PLANNED
-        STARTED
-        TRAVELLED
-    }
-}
-
-Routing --[hidden]> MetaRouter
-
-component MetaRouter {
-    class RoutingOptions
-
-    abstract class RouterNode {
-        DateTime plannedArrivalTime, plannedDepartureTime
-        int air_line_distance_to_origin()
-        int air_line_distance_to_destination()
-
-    }
-    abstract class RouterEdge {
-        start_node RouterNode
-        end_node RouterNode
-        RouterEdgeStatus status()
-    }
-
-    RouterNode <|-- Waypoint
-    RouterEdge <|-- AbstractRoutingLeg
-    RouterEdge <|-- RequestedRoute
-
-    enum RouterEdgeStatus {
-        REQUESTED
-        DATA_GATHERED
-        MERGED
-        OPTIMIZED
-    }
-
-    package Graph {
-        class Node
-        class Edge
+        enum RouteStatus {
+            REQUESTED
+            PROPOSED
+            PLANNED
+            STARTED
+            TRAVELLED
+        }
 
     }
 
-    Node <|-- RouterNode
-    Edge <|-- RouterEdge
-
-
-}
-MetaRouter --[hidden]> RequestBroker
-
-component RequestBroker {
-    enum RequestStatus {
-        INITIALIZED
-        REQUESTED
-        EXECUTED
+    package broker_plugin_bicycle_routing {
+            class BikeRoutingLeg
+            BikeRoutingLeg ---|> RoutingLeg
     }
+    package broker_plugin_public_transport {
+        class DelfiRoutingLeg
+        DelfiRoutingLeg ---|> RoutingLeg
+        note top of DelfiRoutingLeg
+            A delfi routing leg implements the
+            journey context interface - as it is always
+            calculated as part of a potential journey
+        end note
+        RoutingLegJourneyContext <|--- DelfiRoutingLeg
 
-    abstract class RequestBrokerNode {
-        params RoutingRequestParams
-        async retrieve_data()
-        async execute()
     }
 }
+' Dependencies between packages are modelled outside of the package:
+
+RouterNode <|-- Waypoint
+RouterEdge <|-- RoutingLeg
+RouterEdge <|-- RequestedRoute
 
 
+note top of mobility_data_broker: Corresponds to package mobility_data_broker,\ncurrently part of router repo. Subject to change -\n shall be own git project as soon as refactoring stable.\nWill be superseeded by ZMDZ Request Broker as\nsoon as this is developed by external party
 
 
 @enduml
