@@ -112,15 +112,18 @@ package mobility_data_broker {
         abstract class RoutingLeg {
             Place origin
             Place destination
-            Coords end_oords
             int air_line_distance_m
-            int distance_travelled_m
             int duration_travelled
             Waypoint[] waypoints
             RoutingModality modality
             MobilityProduct product
             int transport_duration_secs_estimated
         }
+        abstract class PrivateTransportRoutingLeg {
+           int distance_travelled_m
+        }
+
+        PrivateTransportRoutingLeg ---|> RoutingLeg
 
         note top of RoutingLeg
             A routing leg is (by our definition and
@@ -207,14 +210,12 @@ package mobility_data_broker {
             AbstractRoutingRequestParams routing_params_for_first_mile()
             AbstractRoutingRequestParams routing_params_for_last_mile()
         }
-
-
-
     }
 
     package broker_plugin_bicycle_routing {
-            class BikeRoutingLeg
-            BikeRoutingLeg ---|> RoutingLeg
+            class BikeRoutingLeg {
+            }
+            BikeRoutingLeg ---|> PrivateTransportRoutingLeg
     }
 
     package broker_plugin_public_transport {
