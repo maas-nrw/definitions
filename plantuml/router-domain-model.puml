@@ -35,7 +35,7 @@ package router as "router = intermodal (Meta) Router"{
     package route_calculation {
             class RouteCalculationNode {
                 RoutingRequestParams params
-                DateTime plannedArrivalTime, plannedDepartureTime
+                DateTime planned_arrival_time, planned_departure_time
                 Place origin
                 Place destination
                 int air_line_distance_to_origin()
@@ -114,6 +114,8 @@ package mobility_data_broker {
             Place destination
             Coords end_oords
             int air_line_distance_m
+            int distance_travelled_m
+            int duration_travelled
             Waypoint[] waypoints
             RoutingModality modality
             MobilityProduct product
@@ -129,22 +131,31 @@ package mobility_data_broker {
             The PLANNED of ACTUAL insertion of a RoutingLeg
             into a journey is represented by the
              RoutingLegJourneyWrapper.
-
-            Because <b>actual or estimated</b>
-            <b>departure / arrival times</b>
-            are not part of the base class - only
-            the scheduled times (which are )
-
         end note
 
         interface RoutingLegJourneyContext {
             int leg_idx
             Journey journey
-            DateTime arrival_time_estimated()
-            int waiting_time()
-            int duration_secs_including_waiting_time()
-            int journey_duration_secs_unti_arrival_estimated
+            DateTime start_time
+            int make_ready_time_secs
+            DateTime departure_time
+            int duration_total_secs()
+            int duration_journey_total_secs()
+            DateTime arrival_time
+
+
         }
+        note top of RoutingLegJourneyContext
+            **make_ready_time_secs** is the time between 'start_time' (the preceeding parts of the journey are "finished",
+            i.e. the arrival_time of the previous leg or the start of the total journey if there is no previous leg)
+            and actual time the journey can be continued using the transport described within this leg
+            Resons for having a make_ready_time > 0 can be one or a combination of the following:
+               a) scheduled or estimated waiting time until the transport product of leg is available (e.g.
+                waiting time until a train or bus arrives in case of using public_transport - or time needed
+                until a rented bike is "available" at the origin location of the leg)
+               b) "preparation time" for preparing the product used to be "ready to move" (e.g. time needed to pick
+               up a bike if it is locked somewhere or in case of )
+        end note
         note top of RoutingLegJourneyContext
             There is no interface keyword in python -
             we implement interfaces as abstract classes
