@@ -77,11 +77,10 @@ package mobility_data_broker {
 
     package routing_model_core {
         enum RoutingModality {
-            INTERMODAL
-            PUBLIC_TRANSPORT
-            BIKE
-            FOOT
-            CAR
+            BY_PUBLIC_TRANSPORT
+            BY_BIKE
+            BY_FOOT
+            BY_CAR
         }
 
 
@@ -100,24 +99,38 @@ package mobility_data_broker {
         }
         class TransportProduct {
             String id, name, description
-            OwnershipType owner
+            OwnershipOperationType owner
         }
 
-        enum OwnershipType {
-            OWNED_BY_TRAVELLER
+        enum OwnershipOperationType {
+            OWNED_OPERATED_BY_TRAVELLER
             RENTED_OPERATED_BY_TRAVELLER
             SERVICE_OPERATED_BY_TRANSPORT_OPERATOR
+
+            ProductOwnershipType ownership_type()
+            OperationType operation_type()
+        }
+
+        enum ProductOwnershipType {
+            OWNED_BY_TRAVELLER
+            RENTED
+            OWNED_BY_TRANSPORT_OPERATOR
+        }
+        enum OperationType {
+            BY_TRAVELLER
+            BY_TRANSPORT_OPERATOR
         }
 
         abstract class RoutingLeg {
             Place origin
             Place destination
             int air_line_distance_m
-            int duration_travelled
+            int duration_travelled_in_modality_secs
+            datetime departure_time_scheduled_or_estimated
+            datetime arrival_time_scheduled_or_estimated
             Waypoint[] waypoints
             RoutingModality modality
             MobilityProduct product
-            int transport_duration_secs_estimated
         }
         abstract class PrivateTransportRoutingLeg {
            int distance_travelled_m
@@ -145,8 +158,6 @@ package mobility_data_broker {
             int duration_total_secs()
             int duration_journey_total_secs()
             DateTime arrival_time
-
-
         }
         note top of RoutingLegJourneyContext
             **make_ready_time_secs** is the time between 'start_time' (the preceeding parts of the journey are "finished",
