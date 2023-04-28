@@ -153,22 +153,25 @@ package mobility_data_broker {
             int leg_idx
             Journey journey
             DateTime start_time
-            int make_ready_time_secs
+            int preparation_time_secs
+            int teardown_time_secs
             DateTime departure_time
             int duration_total_secs()
             int duration_journey_total_secs()
             DateTime arrival_time
         }
         note top of RoutingLegJourneyContext
-            **make_ready_time_secs** is the time between 'start_time' (the preceeding parts of the journey are "finished",
+            **preparation_time_secs** is the time between 'start_time' (the preceeding parts of the journey are "finished",
             i.e. the arrival_time of the previous leg or the start of the total journey if there is no previous leg)
-            and actual time the journey can be continued using the transport described within this leg
-            Resons for having a make_ready_time > 0 can be one or a combination of the following:
-               a) scheduled or estimated waiting time until the transport product of leg is available (e.g.
-                waiting time until a train or bus arrives in case of using public_transport - or time needed
-                until a rented bike is "available" at the origin location of the leg)
-               b) "preparation time" for preparing the product used to be "ready to move" (e.g. time needed to pick
-               up a bike if it is locked somewhere or in case of )
+            and actual time the journey can be continued using the transport described within this leg.
+            Reasons for having a preparation_time_secs > 0 can e.g. be the time needed to pick up a bike if it is locked
+            somewhere or in case of a rented bike the handover time of the bike
+            **teardown_time_secs** is the time needed after transport to tear down the product - e.g. to lock a bike or
+            return it to the rental office
+
+            Hint: If there is no absolute time specified as departure/arrival_time_scheduled_or_estimated then there could be
+            a default implementation
+                end_time = start_time + preparation_time_secs + duration_travelled_in_modality_secs + teardown_time_secs
         end note
         note top of RoutingLegJourneyContext
             There is no interface keyword in python -
